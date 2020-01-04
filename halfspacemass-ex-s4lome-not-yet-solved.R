@@ -8,7 +8,7 @@
 # scope:
 # seed: integer >= 0 
 
-
+#### TO DO OUTPUT ?????? 
 
 train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337) {
   
@@ -45,20 +45,26 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
     # Generate a random direction 
     random_direction <- random_direction(dimensions = ncol(data))
     
-    # Generate a subsample FUNKTIONIERT NICHT RICHTIG 
+    # Generate a subsample
     sub_sample <- sub_sample(data,subsample)
     
-    # Project Di onto i , denoted by Di
-    # dot product von jedem daten vektor und unit vektor 
-    
-    # maxi ← max(Di i ), mini ← min(Dii ), midi ← maxi +mini 2 5 
-    
-    # Randomly select si in (midi − λ2 (maxi − mini), midi + λ2 (maxi − mini 6 ))
-    
-    # step 7 
-    
-    # step 8
+    # Project datapoints onto direction, as matrix is neccessary as dot product and norm demands numeric args 
+    # as norm the euclidean norm is used
+    projection <- (as.matrix(sub_sample) %*% random_direction) / norm(as.matrix(sub_sample), type = "F")
 
+    # select maximum, minimum and mid values 
+    max <- max(projection)
+    min <- min(projection)
+    mid <- (max + min) / 2 
+    
+    # select s und S NOCH VERNÜNFTIG BENENNEN 
+    s <- select_s(max,min,mid,scope)
+    
+    # create ml 
+    ml <- create_ml(projection,s,subsample)
+    
+    # create mr
+    mr <- create_mr(projection,s,subsample)
   }
 }
 
@@ -68,8 +74,9 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
 ##################### function for sampling ####################################
 
 sub_sample <- function(data, subsample) {
+  sample_size = round(subsample * nrow(data))
   # Select a random subset of the original data
-  subsample <- data[sample(nrow(data), subsample), ]
+  subsample <- data[sample(nrow(data), sample_size), ]
 }
 
 ##################### function for random direction ############################
@@ -85,4 +92,35 @@ random_direction <- function(dimensions) {
   normalization_const <- sqrt(sum(r_gauss_vector^2))
   # each element of the vector is normalized 
   random_direction <- r_gauss_vector / normalization_const
+}
+
+##################### function for selecting s #################################
+
+select_s <- function(max,min,mid,scope) {
+  # lower bound for intervall
+  lower_bound <- mid - (scope/2 * (max - min))
+  # upper bound for intervall
+  upper_bound <- mid + (scope/2 * (max - min))
+  # select random number in between 
+  s <- runif(lower_bound,upper_bound)
+}
+
+##################### function for creating ml #################################
+
+create_ml <- function(projection,s,subsample){
+  # subset projection by s
+  ml <- as.data.frame(projection)
+  ml <- ml[ml[,1] < s,]
+  # divide power of ml by power of subsample
+  ml <- length(ml)/subsample
+}
+
+##################### function for creating mr #################################
+
+create_mr <- function(projection,s,subsample){
+  # subset projection by s
+  mr <- as.data.frame(projection)
+  mr <- mr[mr[,1] >= s,]
+  # divide power of ml by power of subsample
+  mr <- length(mr)/subsample
 }
