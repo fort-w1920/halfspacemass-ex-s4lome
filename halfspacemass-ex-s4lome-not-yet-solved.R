@@ -8,7 +8,6 @@
 # scope:
 # seed: integer >= 0 
 
-#### TO DO OUTPUT ?????? 
 
 train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337) {
   
@@ -26,10 +25,10 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
   checkmate::assert_integerish(n_halfspace, lower = 1, max.len = 1)
   
   ### for subsample
-  checkmate::assert_integerish(subsample, lower = 1, max.len = 1)
+  checkmate::assert_integerish(subsample, upper = 1, lower = 0, max.len = 1)
   
   ### for scope 
-  checkmate::assert_integerish(scope, lower = 1, max.len = 1)
+  checkmate::assert_integerish(scope, lower = 0, max.len = 1)
   
   ### for seed
   checkmate::assert_integerish(seed, lower = 0, max.len = 1)
@@ -39,6 +38,13 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
   
   
   # IMPLEMENTATION
+  
+  # create vars for output 
+  halfspaces <- list()
+  directions <- matrix(nrow = n_halfspace, ncol = ncol(data))
+  splitpoints <- c()
+  means <- matrix(nrow = n_halfspace, ncol = 2)
+  
   
   for (i in 1:n_halfspace) {
     
@@ -57,15 +63,26 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
     min <- min(projection)
     mid <- (max + min) / 2 
     
-    # select s und S NOCH VERNÜNFTIG BENENNEN 
-    s <- select_s(max,min,mid,scope)
+    # select splitpoint
+    splitpoint <- select_splitpoint(max,min,mid,scope)
     
-    # create ml 
-    ml <- create_ml(projection,s,subsample)
+    # create mean left  
+    mean_left <- create_mean_left(projection,splitpoint,sub_sample)
     
-    # create mr
-    mr <- create_mr(projection,s,subsample)
+    # create mean_right
+    mean_right <- create_mean_right(projection,splitpoint,sub_sample)
+    
+    # add output
+    directions[i, ] <- random_direction
+    splitpoints[i] <- splitpoint 
+    means[i, ] <- c(mean_left,mean_right)
   }
+  halfspaces[["data"]] <- data
+  halfspaces[["directions"]] <- directions
+  halfspaces[["splitpoints"]] <- splitpoints
+  halfspaces[["means"]] <- means
+  
+  halfspaces
 }
 
 
@@ -76,7 +93,7 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
 sub_sample <- function(data, subsample) {
   sample_size = round(subsample * nrow(data))
   # Select a random subset of the original data
-  subsample <- data[sample(nrow(data), sample_size), ]
+  sub_sample <- data[sample(nrow(data), sample_size), ]
 }
 
 ##################### function for random direction ############################
@@ -94,33 +111,33 @@ random_direction <- function(dimensions) {
   random_direction <- r_gauss_vector / normalization_const
 }
 
-##################### function for selecting s #################################
+##################### function for selecting splitpoint ########################
 
-select_s <- function(max,min,mid,scope) {
+select_splitpoint <- function(max,min,mid,scope) {
   # lower bound for intervall
   lower_bound <- mid - (scope/2 * (max - min))
   # upper bound for intervall
   upper_bound <- mid + (scope/2 * (max - min))
   # select random number in between 
-  s <- runif(lower_bound,upper_bound)
+  splitpoint <- runif(n = 1, min = lower_bound, max = upper_bound)
 }
 
-##################### function for creating ml #################################
+##################### function for creating mean left ##########################
 
-create_ml <- function(projection,s,subsample){
+create_mean_left <- function(projection,splitpoint,sub_sample) {
   # subset projection by s
-  ml <- as.data.frame(projection)
-  ml <- ml[ml[,1] < s,]
+  mean_left <- as.data.frame(projection)
+  mean_left <- mean_left[mean_left[,1] < splitpoint,]
   # divide power of ml by power of subsample
-  ml <- length(ml)/subsample
+  mean_left <- length(mean_left) / nrow(sub_sample)
 }
 
-##################### function for creating mr #################################
+##################### function for creating mean right #########################
 
-create_mr <- function(projection,s,subsample){
+create_mean_right <- function(projection,splitpoint,sub_sample) {
   # subset projection by s
-  mr <- as.data.frame(projection)
-  mr <- mr[mr[,1] >= s,]
+  mean_right <- as.data.frame(projection)
+  mean_right <- mean_right[mean_right[,1] >= splitpoint,]
   # divide power of ml by power of subsample
-  mr <- length(mr)/subsample
+  mean_right <- length(mean_right) / nrow(sub_sample)
 }

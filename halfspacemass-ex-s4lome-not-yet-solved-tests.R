@@ -15,7 +15,7 @@ sample(as.matrix(test_df), size = 10, replace = FALSE)
 # testing for random direction 
 # schreib expect that norm = 1 bla 
 for (i in 1:100) {
-test <- random_direction(dimensions = 2)
+test <- random_direction(dimensions = 4)
 print(test)
 
 print(norm(as.matrix(test), type = "F"))
