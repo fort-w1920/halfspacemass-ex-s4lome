@@ -96,10 +96,9 @@ evaluate_depth <- function(data, halfspaces){
   checkmate::assert_list(halfspaces)
   
   
-  lapply(data, calculate_halfspace_mass)
+  apply(test_df, 1, calculate_halfspace_mass)
 
-    
-    
+
     
     
   }
@@ -171,16 +170,25 @@ create_mean_right <- function(projection,splitpoint,sub_sample) {
 
 calculate_halfspace_mass <- function(x, halfspaces){
   
-    halfspace_mass <- 0 
-  
-    #  as.vector((vec %*% t(halfspaces$directions))) das gibt mir die projection von EINEM X auf ALLE richtungen als VEKTOR
-    #  if xi kleiner als si (splitpointvektor der selben länge) then hm = hm + mli ansonsten hm = hm + mri
-    # das heißt: ich hab einen vektor mit projektionen, einen mit splitpoints,
-    # und je nachdem ob xprojektion größer oder kleiner dem splitpoint ist nehme ich mri oder mli in die summe 
-    # dann teilen durch n_halfspaces
+    # projection of x on every direction 
+    projections <- as.vector((as.matrix(x) %*% t(halfspaces$directions)))
     
+    # create matrix with neccessary data 
+    mass_matrix <- data.frame(projections = projections,  
+                              splitpoints = halfspaces$splitpoints,
+                              mean_left = halfspaces$means[,1],
+                              mean_right = halfspaces$means[,2])
+    
+    # filter the matrix that was created above for every entry where prjection is smaller than the splitpoit
+    half_space_mass_left <- sum(subset(mass_matrix, projections < splitpoints)$mean_left)
+    
+    # filter the matrix that was created above for every entry where prjection is bigger than the splitpoit
+    half_space_mass_right <- sum(subset(mass_matrix, projections >= splitpoints)$mean_right)
+    
+    # calculate total halfspace mass
+    half_space_mass <- half_mass_left + half_mass_right 
+    
+    half_space_mass
 }
   
-  
-
 
