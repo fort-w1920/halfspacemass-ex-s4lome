@@ -9,6 +9,8 @@
 # seed: integer >= 0 
 
 
+############ TRAINING ##########################################################
+
 train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337) {
   
   # INPUT CHECKS AND HOMOGENIZATION 
@@ -32,10 +34,6 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
   
   ### for seed
   checkmate::assert_integerish(seed, lower = 0, max.len = 1)
-  
-  
-  # DEFENSIVE STUFF
-  
   
   # IMPLEMENTATION
   
@@ -84,6 +82,33 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
   
   halfspaces
 }
+
+############# TESTING ##########################################################
+
+
+evaluate_depth <- function(data, halfspaces){
+  
+  #input checks 
+  
+  checkmate::assert_data_frame(data)
+  
+  
+  checkmate::assert_list(halfspaces)
+  
+  
+  lapply(data, calculate_halfspace_mass)
+
+    
+    
+    
+    
+  }
+  
+  
+  
+
+
+
 
 
 ############# DEFINING SUBFUNCTIONS ############################################
@@ -141,3 +166,21 @@ create_mean_right <- function(projection,splitpoint,sub_sample) {
   # divide power of ml by power of subsample
   mean_right <- length(mean_right) / nrow(sub_sample)
 }
+
+##################### function for calcualting halfspacemass  FÜR EIN X ###################
+
+calculate_halfspace_mass <- function(x, halfspaces){
+  
+    halfspace_mass <- 0 
+  
+    #  as.vector((vec %*% t(halfspaces$directions))) das gibt mir die projection von EINEM X auf ALLE richtungen als VEKTOR
+    #  if xi kleiner als si (splitpointvektor der selben länge) then hm = hm + mli ansonsten hm = hm + mri
+    # das heißt: ich hab einen vektor mit projektionen, einen mit splitpoints,
+    # und je nachdem ob xprojektion größer oder kleiner dem splitpoint ist nehme ich mri oder mli in die summe 
+    # dann teilen durch n_halfspaces
+    
+}
+  
+  
+
+
