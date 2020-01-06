@@ -86,30 +86,26 @@ train_depth <- function(data, n_halfspace, subsample = 1, scope = 1, seed = 1337
 ############# TESTING ##########################################################
 
 
-evaluate_depth <- function(data, halfspaces){
+evaluate_depth <- function(data, halfspaces) {
   
   #input checks 
   
-  checkmate::assert_data_frame(data)
-  
-  
-  checkmate::assert_list(halfspaces)
-  
-  
-  apply(test_df, 1, calculate_halfspace_mass)
+  # HIER MUSS ICH DAS WAHRSCHEINLICH ALS DATA FRAME CASTEN WEIL MEINE CALCULATE SPACE MASS NUR FÜR DFS FUNKTIONIERT 
 
-
-    
-    
+  # create vector to store halfspacesmasses
+  halfspace_mass <- c()
+  
+  # calculate halfspacemass for every row of data. At first I wanted to do this with apply(data,1,calculate_half_space_masses, halfspaces),
+  # however I got an error for unfitting inputs for calculate_halfspace_masses that I couldnt fix :(
+  for (i in 1:nrow(data)) {
+    data_point <- data[i,]
+    halfspace_mass[i] <- calculate_halfspace_mass(data_point, halfspaces)
   }
+  # add halfspacemass vector to the data 
+  data$mass <- halfspace_mass
+  data
+}
   
-  
-  
-
-
-
-
-
 ############# DEFINING SUBFUNCTIONS ############################################
 
 ##################### function for sampling ####################################
@@ -166,7 +162,7 @@ create_mean_right <- function(projection,splitpoint,sub_sample) {
   mean_right <- length(mean_right) / nrow(sub_sample)
 }
 
-##################### function for calcualting halfspacemass  FÜR EIN X ###################
+##################### function for calcualting halfspacemass for one point #####
 
 calculate_halfspace_mass <- function(x, halfspaces){
   
@@ -186,7 +182,7 @@ calculate_halfspace_mass <- function(x, halfspaces){
     half_space_mass_right <- sum(subset(mass_matrix, projections >= splitpoints)$mean_right)
     
     # calculate total halfspace mass
-    half_space_mass <- half_mass_left + half_mass_right 
+    half_space_mass <- half_space_mass_left + half_space_mass_right 
     
     half_space_mass
 }
